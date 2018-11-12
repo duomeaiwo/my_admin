@@ -1,89 +1,105 @@
 <template>
-  <el-form :model="dynamicValidateForm" ref="dynamicValidateForm" label-width="100px" class="demo-dynamic">
-    <el-form-item
-      prop="email"
-      label="用户名"
-      :rules="[
-        { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-        { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
-      ]"
-    >
-      <el-input v-model="dynamicValidateForm.email"></el-input>
+<div class="login">
+  <el-form ref="form" :model="form" label-width="80px" :rules="rules" status-icon>
+    <img src="../assets/2.jpg" alt="">
+    <el-form-item label="用户名" prop="username">
+      <el-input v-model="form.username" placeholder="请输入用户名"></el-input>
     </el-form-item>
-    <el-form-item
-      v-for="(domain, index) in dynamicValidateForm.domains"
-      :label="'密码'"
-      :key="domain.key"
-      :prop="'domains.' + index + '.value'"
-      :rules="{
-        required: true, message: '域名不能为空', trigger: 'blur'
-      }"
-    >
-      <el-input v-model="domain.value" ></el-input>
+    <el-form-item label="密码" prop="password">
+      <el-input v-model="form.password" placeholder="请输入密码" type="password" @keyup.enter.native="login"></el-input>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="submitForm('dynamicValidateForm')">登录</el-button>
-      <el-button @click="resetForm('dynamicValidateForm')">重置</el-button>
+      <el-button type="primary" @click='login'>登录</el-button>
+      <el-button @click='reset'>重置</el-button>
     </el-form-item>
   </el-form>
+</div>
 </template>
 
 <script>
+import axios from 'axios'
 export default {
   data() {
     return {
-      dynamicValidateForm: {
-        domains: [
-          {
-            value: ''
-          }
+      form: {
+        username: '',
+        password: ''
+      },
+      rules: {
+        username: [
+          { required: true, message: '用户名不能为空', trigger: 'change' },
+          { min: 3, max: 6, message: '长度在 3 到 6 个字符', trigger: 'change' }
         ],
-        email: ''
+        password: [
+          { required: true, message: '密码不能为空', trigger: 'change' },
+          {
+            min: 6,
+            max: 12,
+            message: '长度在 6 到 12 个字符',
+            trigger: 'change'
+          }
+        ]
       }
     }
   },
   methods: {
-    submitForm(formName) {
-      this.$refs[formName].validate(valid => {
+    reset() {
+      this.$refs.form.resetFields()
+    },
+    fn() {
+      alert(1)
+    },
+    login() {
+      this.$refs.form.validate(valid => {
         if (valid) {
-          alert('submit!')
+          axios({
+            url: 'http://localhost:8888/api/private/v1/login',
+            method: 'post',
+            data: this.form
+          }).then(res => {
+            if (res.data.meta.status === 200) {
+              this.$message.success('登陆成功')
+              localStorage.setItem('token', res.data.data.token)
+              this.$router.push('/Home')
+            } else {
+              this.$message({
+                type: 'error',
+                message: res.data.meta.msg
+              })
+            }
+          })
         } else {
           console.log('error submit!!')
           return false
         }
-      })
-    },
-    resetForm(formName) {
-      this.$refs[formName].resetFields()
-    },
-    removeDomain(item) {
-      var index = this.dynamicValidateForm.domains.indexOf(item)
-      if (index !== -1) {
-        this.dynamicValidateForm.domains.splice(index, 1)
-      }
-    },
-    addDomain() {
-      this.dynamicValidateForm.domains.push({
-        value: '',
-        key: Date.now()
       })
     }
   }
 }
 </script>
 
-<style lang='less'>
-html,
-body {
+<style lang='less' scoped>
+.login {
+  height: 100%;
   background-color: #2d434c;
-}
-.el-form {
-  width: 450px;
-  height: 300px;
-  border-radius: 10px;
-  background: #fff;
-  margin: 100px auto;
-  text-align: center;
-  padding: 10px;
+  overflow: hidden;
+  .el-form {
+    margin: 200px auto;
+    width: 400px;
+    background: #fff;
+    padding: 75px 40px 15px;
+    border-radius: 20px;
+    position: relative;
+  }
+  img {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    position: absolute;
+    top: -90px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 10px solid #fff;
+  }
 }
 </style>
